@@ -22,7 +22,15 @@ export default function Sidebar({ activeTab, setActiveTab, darkMode, resetAnalys
     if (userData) {
       try {
         const parsedUser = JSON.parse(userData)
-        setUser(parsedUser)
+        // Make sure we have a valid user object with a name
+        if (parsedUser && typeof parsedUser === "object") {
+          // Use the name from the user data, or fallback to firstName, or email, or "User"
+          const displayName = parsedUser.name || parsedUser.firstName || parsedUser.email?.split("@")[0] || "User"
+          setUser({
+            ...parsedUser,
+            name: displayName,
+          })
+        }
       } catch (error) {
         console.error("Error parsing user data:", error)
       }

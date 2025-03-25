@@ -38,7 +38,7 @@ export default function DashboardOverview({ darkMode, user, setActiveTab }: Dash
     <>
       {/* Welcome Section */}
       <div className={`mb-6 ${darkMode ? "text-white" : "text-[#2c4657]"}`}>
-        <h2 className="text-xl font-semibold">Welcome {user?.name?.split(" ")[0] || "User"}!</h2>
+        <h2 className="text-xl font-semibold">Welcome {user?.name || user?.firstName || "User"}!</h2>
         <p className="text-sm text-gray-500 mt-1">
           Monitor your feed analyses and get nutritional insights for your livestock.
         </p>

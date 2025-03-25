@@ -46,8 +46,16 @@ export default function LoginPage() {
         throw new Error(data.message || "Login failed")
       }
 
+      // Make sure we have a valid user object
+      const userData = data.user || data
+
+      // Ensure the user object has a name property
+      if (!userData.name && userData.email) {
+        userData.name = userData.email.split("@")[0] // Use email username as fallback
+      }
+
       // Store user data in localStorage
-      localStorage.setItem("user", JSON.stringify(data.user || data))
+      localStorage.setItem("user", JSON.stringify(userData))
 
       // Store token if available
       if (data.token) {
