@@ -4,14 +4,12 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import Link from "next/link"
 import { Eye, EyeOff, Info, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { registerUser } from "@/lib/api"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -59,17 +57,32 @@ export default function RegisterPage() {
       return
     }
 
+    // Basic email validation
+    if (!formData.email.includes("@")) {
+      setError("Please enter a valid email address")
+      setIsLoading(false)
+      return
+    }
+
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+
     try {
-      // Use the registerUser function that properly maps the fields
-      const data = await registerUser(formData)
+      // Create mock user data
+      const userId = Math.random().toString(36).substring(2, 15)
+      const mockToken = `mock_token_${userId}_${Date.now()}`
+
+      const userData = {
+        id: userId,
+        fullName: formData.fullName,
+        email: formData.email,
+        mobileNumber: formData.mobileNumber,
+        dateOfBirth: formData.dateOfBirth,
+      }
 
       // Store user data in localStorage
-      localStorage.setItem("user", JSON.stringify(data.user || data))
-
-      // Store token if available
-      if (data.token) {
-        localStorage.setItem("token", data.token)
-      }
+      localStorage.setItem("user", JSON.stringify(userData))
+      localStorage.setItem("token", mockToken)
 
       // Show success message
       setSuccessMessage("Registration successful! Redirecting to security PIN setup...")
@@ -256,7 +269,9 @@ export default function RegisterPage() {
       </div>
 
       <footer className="p-4 flex justify-center">
-        <Image src="/feedsmart-logo.png" alt="FeedSmart Logo" width={120} height={40} />
+        <div className="h-10 w-32 bg-gray-200 flex items-center justify-center rounded">
+          <p className="text-sm text-gray-500">FeedSmart Logo</p>
+        </div>
       </footer>
     </div>
   )

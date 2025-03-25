@@ -42,10 +42,10 @@ export async function register(userData: any) {
   return apiRequest(API_ENDPOINTS.REGISTER, "POST", userData)
 }
 
-// Add a function to handle registration with proper field mapping
+// A function to handle registration with proper field mapping
 export async function registerUser(userData: any) {
   const apiData = {
-    firstName: userData.fullName || userData.firstName, // Map fullName to firstName
+    firstName: userData.fullName || userData.firstName, // fullName was mapped to firstName
     name: userData.fullName || userData.name,
     email: userData.email,
     phone: userData.mobileNumber || userData.phone,
