@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { Eye, EyeOff, Info, HelpCircle } from "lucide-react"
@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export default function ResetPasswordPage() {
+// Create a client component that uses useSearchParams
+function ResetPasswordForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const searchParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "")
   const token = searchParams.get("token")
 
   const [isLoading, setIsLoading] = useState(false)
@@ -69,8 +70,8 @@ export default function ResetPasswordPage() {
 
       // Successful reset
       setSuccess(true)
-    } catch (err: any) {
-      setError(err.message || "An error occurred during password reset")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred during password reset")
     } finally {
       setIsLoading(false)
     }
@@ -89,8 +90,8 @@ export default function ResetPasswordPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <p className="text-sm mb-4">
-                    Enter your new password below. Make sure it's at least 8 characters and includes a mix of letters,
-                    numbers, and symbols.
+                    Enter your new password below. Make sure it&apos;s at least 8 characters and includes a mix of
+                    letters, numbers, and symbols.
                   </p>
 
                   <div className="space-y-2">
@@ -151,7 +152,7 @@ export default function ResetPasswordPage() {
                 </Button>
 
                 <div className="text-center text-xs mt-4">
-                  <p>Using FeedSmart, I'm Access</p>
+                  <p>Using FeedSmart, I&apos;m Access</p>
                 </div>
               </form>
             ) : (
@@ -197,6 +198,15 @@ export default function ResetPasswordPage() {
         <Image src="/feedsmart-logo.png" alt="FeedSmart Logo" width={120} height={40} />
       </footer>
     </div>
+  )
+}
+
+// Main page component with Suspense
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   )
 }
 

@@ -18,6 +18,9 @@ const nextConfig = {
       // your project has TypeScript errors.
       ignoreBuildErrors: true,
     },
+    
+    // Disable static export errors
+    output: 'standalone',
   }
   
   export default nextConfig
