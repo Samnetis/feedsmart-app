@@ -107,8 +107,8 @@ export default function SecurityPinPage() {
 
       // Successful verification
       router.push("/dashboard") // Redirect to dashboard or home page
-    } catch (err: any) {
-      setError(err.message || "An error occurred during verification")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred during verification")
     } finally {
       setIsLoading(false)
     }
@@ -139,8 +139,8 @@ export default function SecurityPinPage() {
       // Start countdown
       setResendDisabled(true)
       setCountdown(60)
-    } catch (err: any) {
-      setError(err.message || "An error occurred. Please try again.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred. Please try again.")
     } finally {
       setIsVerifying(false)
     }
@@ -155,6 +155,11 @@ export default function SecurityPinPage() {
       setResendDisabled(false)
     }
   }, [countdown, resendDisabled])
+
+  // Fixed ref callback function that doesn't return a value
+  const setInputRef = (index: number) => (el: HTMLInputElement | null) => {
+    inputRefs.current[index] = el
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -171,7 +176,7 @@ export default function SecurityPinPage() {
                   {pin.map((digit, index) => (
                     <div key={index} className="w-10 h-10 relative">
                       <input
-                        ref={(el) => (inputRefs.current[index] = el)}
+                        ref={setInputRef(index)}
                         type="text"
                         inputMode="numeric"
                         value={digit}
@@ -205,7 +210,7 @@ export default function SecurityPinPage() {
               </div>
 
               <div className="text-center text-xs mt-4">
-                <p>Using FeedSmart, I'm Access</p>
+                <p>Using FeedSmart, I&apos;m Access</p>
               </div>
             </form>
 
