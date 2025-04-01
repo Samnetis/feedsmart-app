@@ -51,13 +51,13 @@ function ResetPasswordForm() {
     }
 
     try {
-      const response = await fetch("/api/auth/reset-password", {
+      // Use the direct API endpoint
+      const response = await fetch(`/api/v1/auth/reset-password/${token}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          token,
           password: formData.password,
         }),
       })

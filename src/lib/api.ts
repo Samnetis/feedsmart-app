@@ -1,12 +1,10 @@
-// Base API URL
-export const BASE_URL = "https://nutrisnap.climdesdata.com"
-
-// API endpoints
+// Direct API endpoints without base URL
 export const API_ENDPOINTS = {
-  LOGIN: `${BASE_URL}/api/v1/auth/login`,
-  REGISTER: `${BASE_URL}/api/v1/users`,
-  FORGOT_PASSWORD: `${BASE_URL}/api/v1/auth/forgot-password`,
-  RESET_PASSWORD: (token: string) => `${BASE_URL}/api/v1/auth/reset-password/${token}`,
+  LOGIN: "/api/v1/auth/login",
+  REGISTER: "/api/v1/users",
+  FORGOT_PASSWORD: "/api/v1/auth/forgot-password",
+  RESET_PASSWORD: (token: string) => `/api/v1/auth/reset-password/${token}`,
+  UPDATE_PASSWORD: "/api/v1/auth/update-password",
 }
 
 // Helper function for API requests
@@ -42,10 +40,10 @@ export async function register(userData: any) {
   return apiRequest(API_ENDPOINTS.REGISTER, "POST", userData)
 }
 
-// A function to handle registration with proper field mapping
+// Add a function to handle registration with proper field mapping
 export async function registerUser(userData: any) {
   const apiData = {
-    firstName: userData.fullName || userData.firstName, // fullName was mapped to firstName
+    firstName: userData.fullName || userData.firstName, // Map fullName to firstName
     name: userData.fullName || userData.name,
     email: userData.email,
     phone: userData.mobileNumber || userData.phone,
@@ -62,5 +60,13 @@ export async function forgotPassword(email: string) {
 
 export async function resetPassword(token: string, password: string) {
   return apiRequest(API_ENDPOINTS.RESET_PASSWORD(token), "POST", { password })
+}
+
+export async function updatePassword(currentPassword: string, newPassword: string, userId: string) {
+  return apiRequest(API_ENDPOINTS.UPDATE_PASSWORD, "POST", {
+    currentPassword,
+    newPassword,
+    userId,
+  })
 }
 

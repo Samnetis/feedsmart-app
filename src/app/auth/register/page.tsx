@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import Link from "next/link"
 import { Eye, EyeOff, Info, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -57,32 +58,39 @@ export default function RegisterPage() {
       return
     }
 
-    // Basic email validation
-    if (!formData.email.includes("@")) {
-      setError("Please enter a valid email address")
-      setIsLoading(false)
-      return
-    }
-
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
     try {
-      // Create mock user data
-      const userId = Math.random().toString(36).substring(2, 15)
-      const mockToken = `mock_token_${userId}_${Date.now()}`
-
+      // Prepare user data for API
       const userData = {
-        id: userId,
-        fullName: formData.fullName,
+        firstName: formData.fullName,
+        name: formData.fullName,
         email: formData.email,
-        mobileNumber: formData.mobileNumber,
-        dateOfBirth: formData.dateOfBirth,
+        phone: formData.mobileNumber,
+        dob: formData.dateOfBirth,
+        password: formData.password,
+      }
+
+      // Use the direct API endpoint
+      const response = await fetch("/api/v1/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed")
       }
 
       // Store user data in localStorage
-      localStorage.setItem("user", JSON.stringify(userData))
-      localStorage.setItem("token", mockToken)
+      localStorage.setItem("user", JSON.stringify(data.user || data))
+
+      // Store token if available
+      if (data.token) {
+        localStorage.setItem("token", data.token)
+      }
 
       // Show success message
       setSuccessMessage("Registration successful! Redirecting to security PIN setup...")
@@ -91,8 +99,8 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push("/auth/security-pin")
       }, 2000)
-    } catch (err: any) {
-      setError(err.message || "An error occurred during registration")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred during registration")
     } finally {
       setIsLoading(false)
     }
@@ -243,7 +251,7 @@ export default function RegisterPage() {
               </Button>
 
               <div className="text-center text-xs mt-4">
-                <p>Using FeedSmart, I'm Access</p>
+                <p>Using FeedSmart, I&apos;m Access</p>
               </div>
             </form>
 
@@ -269,9 +277,7 @@ export default function RegisterPage() {
       </div>
 
       <footer className="p-4 flex justify-center">
-        <div className="h-10 w-32 bg-gray-200 flex items-center justify-center rounded">
-          <p className="text-sm text-gray-500">FeedSmart Logo</p>
-        </div>
+        <Image src="/feedsmart-logo.png" alt="FeedSmart Logo" width={120} height={40} />
       </footer>
     </div>
   )

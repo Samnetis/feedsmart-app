@@ -10,10 +10,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Valid 6-digit PIN is required" }, { status: 400 })
     }
 
-    // Since there's no specific PIN verification endpoint in the provided list,
-    // we'll simulate this functionality for now
-    // In a real application, you would connect to your actual PIN verification endpoint
-
     // Simulate a successful response
     return NextResponse.json({
       success: true,

@@ -32,7 +32,8 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const response = await fetch("/api/auth/login", {
+      // Use the direct API endpoint
+      const response = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -64,8 +65,8 @@ export default function LoginPage() {
 
       // Successful login
       router.push("/dashboard")
-    } catch (err: any) {
-      setError(err.message || "An error occurred during login")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred during login")
     } finally {
       setIsLoading(false)
     }
@@ -145,7 +146,7 @@ export default function LoginPage() {
               </div>
 
               <div className="text-center text-xs mt-4">
-                <p>Using FeedSmart, I'm Access</p>
+                <p>Using FeedSmart, I&apos;m Access</p>
               </div>
             </form>
 
@@ -161,7 +162,7 @@ export default function LoginPage() {
 
           <div className="text-center text-xs text-gray-500 mt-4">
             <p>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/auth/register" className="underline">
                 Sign up
               </Link>

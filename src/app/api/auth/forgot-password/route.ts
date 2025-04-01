@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { API_ENDPOINTS } from "@/lib/api"
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +11,7 @@ export async function POST(request: Request) {
     }
 
     // Forward the request to the actual API
-    const response = await fetch(API_ENDPOINTS.FORGOT_PASSWORD, {
+    const response = await fetch("/api/v1/auth/forgot-password", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

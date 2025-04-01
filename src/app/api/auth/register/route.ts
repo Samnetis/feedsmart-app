@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { API_ENDPOINTS } from "@/lib/api"
 
 export async function POST(request: Request) {
   try {
@@ -22,7 +21,7 @@ export async function POST(request: Request) {
     }
 
     // Forward the request to the actual API
-    const response = await fetch(API_ENDPOINTS.REGISTER, {
+    const response = await fetch("/api/v1/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

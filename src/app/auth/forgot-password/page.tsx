@@ -25,7 +25,8 @@ export default function ForgotPasswordPage() {
     setError("")
 
     try {
-      const response = await fetch("/api/auth/forgot-password", {
+      // Use the direct API endpoint
+      const response = await fetch("/api/v1/auth/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -39,14 +40,14 @@ export default function ForgotPasswordPage() {
         throw new Error(data.message || "Password reset request failed")
       }
 
-      // For demo purposes, I'm using a hardcoded token
-      // If this app will be deployed, then this token would be sent to the user's email
+      // For demo purposes, we'll use a hardcoded token
+      // In a real app, this token would be sent to the user's email
       setResetToken("559728")
 
       // Successful request
       setSuccess(true)
-    } catch (err: any) {
-      setError(err.message || "An error occurred. Please try again.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -65,7 +66,8 @@ export default function ForgotPasswordPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <p className="text-sm mb-4">
-                    Enter your email address associated with your account, and we'll send you a password reset link.
+                    Enter your email address associated with your account, and we&apos;ll send you a password reset
+                    link.
                   </p>
                   <Label htmlFor="email" className="text-white">
                     Enter Email Address
@@ -98,7 +100,7 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 <div className="text-center text-xs mt-4">
-                  <p>Using FeedSmart, I'm Access</p>
+                  <p>Using FeedSmart, I&apos;m Access</p>
                 </div>
               </form>
             ) : (
@@ -106,7 +108,7 @@ export default function ForgotPasswordPage() {
                 <div className="py-4">
                   <h2 className="text-xl font-semibold mb-2">Check Your Email</h2>
                   <p className="text-sm">
-                    We've sent a password reset link to <span className="font-medium">{email}</span>
+                    We&apos;ve sent a password reset link to <span className="font-medium">{email}</span>
                   </p>
                   <p className="text-sm mt-2">
                     For demo purposes, your reset token is: <span className="font-bold">{resetToken}</span>
@@ -121,7 +123,7 @@ export default function ForgotPasswordPage() {
                 </Button>
 
                 <p className="text-sm">
-                  Didn't receive the email?{" "}
+                  Didn&apos;t receive the email?{" "}
                   <button
                     onClick={() => {
                       setSuccess(false)
