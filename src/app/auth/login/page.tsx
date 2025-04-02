@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import Link from "next/link"
 import { Eye, EyeOff, Info, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -32,8 +31,8 @@ export default function LoginPage() {
     setError("")
 
     try {
-      // Use the direct API endpoint
-      const response = await fetch("/api/v1/auth/login", {
+      // Using Next.js API route which will proxy to the real API
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,14 +40,36 @@ export default function LoginPage() {
         body: JSON.stringify(formData),
       })
 
-      const data = await response.json()
+      // Get the response text first
+      const responseText = await response.text()
+      console.log("Response status:", response.status)
+      console.log("Response text:", responseText)
 
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed")
+      // Try to parse as JSON
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (e) {
+        if (!response.ok) {
+          throw new Error(responseText || `Request failed with status ${response.status}`)
+        }
+        data = { message: responseText }
       }
 
-      // Make sure we have a valid user object
-      const userData = data.user || data
+      // If the response was not successful, throw an error
+      if (!response.ok) {
+        throw new Error(data.message || `Request failed with status ${response.status}`)
+      }
+
+      // Extract user data from the response
+      let userData
+      if (data.user) {
+        userData = data.user
+      } else if (data.data) {
+        userData = data.data
+      } else {
+        userData = data
+      }
 
       // Ensure the user object has a name property
       if (!userData.name && userData.email) {
@@ -61,12 +82,18 @@ export default function LoginPage() {
       // Store token if available
       if (data.token) {
         localStorage.setItem("token", data.token)
+      } else if (data.accessToken) {
+        localStorage.setItem("token", data.accessToken)
       }
 
-      // Successful login
-      router.push("/dashboard")
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred during login")
+      // Check if user has set up a security PIN
+      const hasPin = localStorage.getItem("securityPin")
+
+      // Redirect to appropriate page
+      router.push(hasPin ? "/dashboard" : "/auth/security-pin")
+    } catch (err: any) {
+      console.error("Login error:", err)
+      setError(err.message || "An error occurred during login")
     } finally {
       setIsLoading(false)
     }
@@ -172,7 +199,9 @@ export default function LoginPage() {
       </div>
 
       <footer className="p-4 flex justify-center">
-        <Image src="/feedsmart-logo.png" alt="FeedSmart Logo" width={120} height={40} />
+        <div className="h-10 w-32 bg-gray-200 flex items-center justify-center rounded">
+          <p className="text-sm text-gray-500">FeedSmart Logo</p>
+        </div>
       </footer>
     </div>
   )

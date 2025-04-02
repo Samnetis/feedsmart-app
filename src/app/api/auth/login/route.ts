@@ -1,92 +1,56 @@
-import { NextResponse } from "next/server"
-import { API_ENDPOINTS } from "@/lib/api"
+import { type NextRequest, NextResponse } from "next/server"
 
-export async function POST(request: Request) {
+// The actual backend API URL
+const API_URL = "https://nutrisnap.climdesdata.com/api/v1/auth/login"
+
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const data = await request.json()
+    console.log("Received login data:", data)
 
-    // Validate input
-    if (!email || !password) {
-      return NextResponse.json({ message: "Email and password are required" }, { status: 400 })
-    }
+    // Forward the request to the actual API
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
 
-    console.log("Login attempt for:", email)
+    // Get the response as text first
+    const responseText = await response.text()
 
-    // Forward the request to the API endpoint with the correct URL
-    const apiUrl = API_ENDPOINTS.LOGIN
-    console.log("Sending request to:", apiUrl)
+    console.log("API response status:", response.status)
+    console.log("API response text:", responseText)
 
+    // Try to parse as JSON
+    let responseData
     try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      // Log the response status for debugging
-      console.log("API response status:", response.status)
-
-      // Get the response text first
-      const responseText = await response.text()
-      console.log("API response text:", responseText)
-
-      let responseData
-
-      // Try to parse as JSON
-      try {
-        responseData = JSON.parse(responseText)
-      } catch (parseError) {
-        console.error("Error parsing response as JSON")
-
-        // If it's HTML, extract any error message
-        if (responseText.includes("<!DOCTYPE html>")) {
-          const errorMatch = responseText.match(/<pre>(.*?)<\/pre>/)
-          if (errorMatch) {
-            // If we got an error like "Cannot POST /api/v1/auth/login", try a different endpoint
-            const errorMessage = errorMatch[1]
-            console.error("HTML error message:", errorMessage)
-
-            // Return a formatted error response
-            return NextResponse.json(
-              {
-                message: `API Error: ${errorMessage}. Please check the API endpoint.`,
-              },
-              { status: 400 },
-            )
-          }
-        }
-
-        // If we can't extract a specific error, return the whole response text
+      responseData = JSON.parse(responseText)
+    } catch (e) {
+      // If it's not valid JSON, return the text as is
+      if (!response.ok) {
         return NextResponse.json(
-          {
-            message: `API returned non-JSON response: ${responseText}`,
-          },
-          { status: 500 },
+          { message: responseText || `Request failed with status ${response.status}` },
+          { status: response.status },
         )
       }
+      responseData = { message: responseText }
+    }
 
-      // Return the parsed JSON response
-      return NextResponse.json(responseData, { status: response.status })
-    } catch (apiError: any) {
-      console.error("Error calling external API:", apiError)
+    // If the response was not successful, return the error
+    if (!response.ok) {
       return NextResponse.json(
-        {
-          message: `API request failed: ${apiError.message}`,
-        },
-        { status: 500 },
+        { message: responseData.message || `Request failed with status ${response.status}` },
+        { status: response.status },
       )
     }
+
+    // Return the successful response
+    return NextResponse.json(responseData)
   } catch (error: any) {
-    console.error("Login error in API route:", error)
-    return NextResponse.json(
-      {
-        message: `An error occurred during login: ${error.message}`,
-      },
-      { status: 500 },
-    )
+    console.error("Login error:", error)
+    return NextResponse.json({ message: error.message || "Login failed" }, { status: 500 })
   }
 }
 
