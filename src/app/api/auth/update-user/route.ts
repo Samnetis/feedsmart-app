@@ -1,29 +1,31 @@
 import { NextResponse } from "next/server"
 import { API_ENDPOINTS } from "@/lib/api"
 
-export async function POST(request: Request) {
+export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { email, password } = body
 
-    // Validate input
-    if (!email || !password) {
-      return NextResponse.json({ message: "Email and password are required" }, { status: 400 })
+    // Get token from request headers
+    const authHeader = request.headers.get("authorization")
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json({ message: "Authentication required" }, { status: 401 })
     }
 
-    console.log("Login attempt for:", email)
+    const token = authHeader.split(" ")[1]
+    console.log("Update user request with token:", token)
 
     // Forward the request to the API endpoint with the correct URL
-    const apiUrl = API_ENDPOINTS.LOGIN
+    const apiUrl = API_ENDPOINTS.UPDATE_USER
     console.log("Sending request to:", apiUrl)
 
     try {
       const response = await fetch(apiUrl, {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(body),
       })
 
       // Log the response status for debugging
@@ -45,7 +47,6 @@ export async function POST(request: Request) {
         if (responseText.includes("<!DOCTYPE html>")) {
           const errorMatch = responseText.match(/<pre>(.*?)<\/pre>/)
           if (errorMatch) {
-            // If we got an error like "Cannot POST /api/v1/auth/login", try a different endpoint
             const errorMessage = errorMatch[1]
             console.error("HTML error message:", errorMessage)
 
@@ -80,10 +81,10 @@ export async function POST(request: Request) {
       )
     }
   } catch (error: any) {
-    console.error("Login error in API route:", error)
+    console.error("Update user error in API route:", error)
     return NextResponse.json(
       {
-        message: `An error occurred during login: ${error.message}`,
+        message: `An error occurred while updating user data: ${error.message}`,
       },
       { status: 500 },
     )

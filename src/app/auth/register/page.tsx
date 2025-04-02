@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import Link from "next/link"
 import { Eye, EyeOff, Info, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,10 +17,11 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
-    mobileNumber: "",
-    dateOfBirth: "",
+    phone: "",
+    dob: "",
     password: "",
     confirmPassword: "",
     agreeToTerms: false,
@@ -59,18 +59,22 @@ export default function RegisterPage() {
     }
 
     try {
-      // Prepare user data for API
+      // Prepare the data in the format expected by the API
       const userData = {
-        firstName: formData.fullName,
-        name: formData.fullName,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
-        phone: formData.mobileNumber,
-        dob: formData.dateOfBirth,
+        phone: formData.phone,
+        dob: formData.dob,
         password: formData.password,
+        confirmPassword: formData.confirmPassword, // This will be mapped to passwordConfirm in the API route
+        passwordConfirm: formData.confirmPassword, // Also include the expected field name directly
       }
 
-      // Use the direct API endpoint
-      const response = await fetch("/api/v1/users", {
+      console.log("Sending registration data:", userData)
+
+      // Call our Next.js API route which will proxy to the real API
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -78,18 +82,41 @@ export default function RegisterPage() {
         body: JSON.stringify(userData),
       })
 
-      const data = await response.json()
+      // Get the response text first
+      const responseText = await response.text()
+      console.log("Response status:", response.status)
+      console.log("Response text:", responseText)
 
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed")
+      // Try to parse as JSON
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (e) {
+        if (!response.ok) {
+          throw new Error(responseText || `Request failed with status ${response.status}`)
+        }
+        data = { message: responseText }
       }
 
-      // Store user data in localStorage
-      localStorage.setItem("user", JSON.stringify(data.user || data))
+      // If the response was not successful, throw an error
+      if (!response.ok) {
+        throw new Error(data.message || `Request failed with status ${response.status}`)
+      }
+
+      // Store user data in localStorage if available
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user))
+      } else if (data.data) {
+        localStorage.setItem("user", JSON.stringify(data.data))
+      } else {
+        localStorage.setItem("user", JSON.stringify(data))
+      }
 
       // Store token if available
       if (data.token) {
         localStorage.setItem("token", data.token)
+      } else if (data.accessToken) {
+        localStorage.setItem("token", data.accessToken)
       }
 
       // Show success message
@@ -99,8 +126,9 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push("/auth/security-pin")
       }, 2000)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred during registration")
+    } catch (err: any) {
+      console.error("Registration error:", err)
+      setError(err.message || "An error occurred during registration")
     } finally {
       setIsLoading(false)
     }
@@ -116,20 +144,37 @@ export default function RegisterPage() {
 
           <div className="bg-[#0D3B36] rounded-3xl p-6 text-white">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-white">
-                  Full Name
-                </Label>
-                <Input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  required
-                  className="bg-white text-black"
-                  placeholder="John Doe"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-white">
+                    First Name
+                  </Label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                    className="bg-white text-black"
+                    placeholder="John"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-white">
+                    Last Name
+                  </Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                    className="bg-white text-black"
+                    placeholder="Doe"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -149,14 +194,14 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="mobileNumber" className="text-white">
-                  Mobile Number
+                <Label htmlFor="phone" className="text-white">
+                  Phone Number
                 </Label>
                 <Input
-                  id="mobileNumber"
-                  name="mobileNumber"
+                  id="phone"
+                  name="phone"
                   type="tel"
-                  value={formData.mobileNumber}
+                  value={formData.phone}
                   onChange={handleChange}
                   required
                   className="bg-white text-black"
@@ -165,14 +210,14 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth" className="text-white">
+                <Label htmlFor="dob" className="text-white">
                   Date of Birth
                 </Label>
                 <Input
-                  id="dateOfBirth"
-                  name="dateOfBirth"
+                  id="dob"
+                  name="dob"
                   type="date"
-                  value={formData.dateOfBirth}
+                  value={formData.dob}
                   onChange={handleChange}
                   required
                   className="bg-white text-black"
@@ -251,7 +296,7 @@ export default function RegisterPage() {
               </Button>
 
               <div className="text-center text-xs mt-4">
-                <p>Using FeedSmart, I&apos;m Access</p>
+                <p>Using FeedSmart, I'm Access</p>
               </div>
             </form>
 
@@ -277,7 +322,9 @@ export default function RegisterPage() {
       </div>
 
       <footer className="p-4 flex justify-center">
-        <Image src="/feedsmart-logo.png" alt="FeedSmart Logo" width={120} height={40} />
+        <div className="h-10 w-32 bg-gray-200 flex items-center justify-center rounded">
+          <p className="text-sm text-gray-500">FeedSmart Logo</p>
+        </div>
       </footer>
     </div>
   )

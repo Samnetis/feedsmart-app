@@ -1,41 +1,88 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 
-export async function POST(request: Request) {
+// The actual backend API URL
+const API_URL = "https://nutrisnap.climdesdata.com/api/v1/users"
+
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { fullName, email, mobileNumber, dateOfBirth, password } = body
+    const data = await request.json()
+    console.log("Received registration data:", data)
 
-    // Validate input
-    if (!fullName || !email || !mobileNumber || !dateOfBirth || !password) {
-      return NextResponse.json({ message: "All fields are required" }, { status: 400 })
+    // Make sure we're using the correct field names
+    if (data.lasttName && !data.lastName) {
+      data.lastName = data.lasttName
+      delete data.lasttName
     }
 
-    // Prepare user data for API
-    const userData = {
-      firstName: fullName, // Add firstName field
-      name: fullName,
-      email,
-      phone: mobileNumber,
-      dob: dateOfBirth,
-      password,
+    // Add passwordConfirm field if it doesn't exist
+    if (data.confirmPassword && !data.passwordConfirm) {
+      data.passwordConfirm = data.confirmPassword
+    } else if (data.password && !data.passwordConfirm) {
+      // If confirmPassword is not provided, use password as passwordConfirm
+      data.passwordConfirm = data.password
     }
+
+    // Validate required fields
+    if (!data.firstName || !data.lastName) {
+      return NextResponse.json({ message: "FirstName and LastName is required" }, { status: 400 })
+    }
+
+    // Create a new object with only the fields expected by the API
+    const apiData = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
+      dob: data.dob,
+      password: data.password,
+      passwordConfirm: data.passwordConfirm,
+    }
+
+    console.log("Sending to API:", apiData)
 
     // Forward the request to the actual API
-    const response = await fetch("/api/v1/users", {
+    const response = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(userData),
+      body: JSON.stringify(apiData),
     })
 
-    const data = await response.json()
+    // Get the response as text first
+    const responseText = await response.text()
 
-    // Return the response from the actual API
-    return NextResponse.json(data, { status: response.status })
-  } catch (error) {
+    console.log("API response status:", response.status)
+    console.log("API response text:", responseText)
+
+    // Try to parse as JSON
+    let responseData
+    try {
+      responseData = JSON.parse(responseText)
+    } catch (e) {
+      // If it's not valid JSON, return the text as it is
+      if (!response.ok) {
+        return NextResponse.json(
+          { message: responseText || `Request failed with status ${response.status}` },
+          { status: response.status },
+        )
+      }
+      responseData = { message: responseText }
+    }
+
+    // If the response was not successful, return the error
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: responseData.message || `Request failed with status ${response.status}` },
+        { status: response.status },
+      )
+    }
+
+    // Return the successful response
+    return NextResponse.json(responseData)
+  } catch (error: any) {
     console.error("Registration error:", error)
-    return NextResponse.json({ message: "An error occurred during registration" }, { status: 500 })
+    return NextResponse.json({ message: error.message || "Registration failed" }, { status: 500 })
   }
 }
 
