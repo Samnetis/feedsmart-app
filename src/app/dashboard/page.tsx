@@ -16,9 +16,22 @@ import ChatBot from "@/components/dashboard/chat-bot"
 
 import type React from "react"
 
+interface User {
+  _id?: string
+  id?: string
+  name?: string
+  firstName?: string
+  lastName?: string
+  email: string
+  phone?: string
+  role?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
 export default function DashboardPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [chatOpen, setChatOpen] = useState(false)
   const [message, setMessage] = useState("")
@@ -64,21 +77,46 @@ export default function DashboardPage() {
   useEffect(() => {
     // Check if user is logged in
     const userData = localStorage.getItem("user")
-    if (!userData) {
+    const token = localStorage.getItem("token")
+
+    if (!userData || !token) {
       router.push("/auth/login")
       return
     }
 
     try {
       const parsedUser = JSON.parse(userData)
-      // Make sure we have a valid user object with a name
+      console.log("Dashboard - User data from localStorage:", parsedUser)
+
+      // Make sure we have a valid user object
       if (parsedUser && typeof parsedUser === "object") {
-        // Use the name from the user data, or fallback to firstName, or email, or "User"
-        const displayName = parsedUser.name || parsedUser.firstName || parsedUser.email?.split("@")[0] || "User"
-        setUser({
-          ...parsedUser,
-          name: displayName,
-        })
+        // Extract user data based on API response structure
+        let userObj: User
+
+        if (parsedUser.data && parsedUser.data.user) {
+          // Handle nested structure from login API
+          userObj = parsedUser.data.user
+        } else if (parsedUser.user) {
+          // Handle user property
+          userObj = parsedUser.user
+        } else {
+          // Use as is
+          userObj = parsedUser
+        }
+
+        // Create a formatted user object with name
+        const formattedUser = {
+          ...userObj,
+          // Ensure name is set for display purposes
+          name:
+            userObj.name ||
+            (userObj.firstName && userObj.lastName
+              ? `${userObj.firstName} ${userObj.lastName}`
+              : userObj.firstName || userObj.email?.split("@")[0] || "User"),
+        }
+
+        console.log("Dashboard - Formatted user data:", formattedUser)
+        setUser(formattedUser)
       } else {
         throw new Error("Invalid user data")
       }
@@ -92,7 +130,9 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     localStorage.removeItem("user")
-    router.push("/")
+    localStorage.removeItem("token")
+    localStorage.removeItem("securityPin")
+    router.push("/auth/login")
   }
 
   const sendMessage = () => {
@@ -186,7 +226,7 @@ export default function DashboardPage() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+          <Header darkMode={darkMode} setDarkMode={setDarkMode} user={user} />
 
           {/* Main Dashboard Content */}
           <main className={`flex-1 overflow-y-auto p-6 ${darkMode ? "bg-gray-900" : "bg-[#f0f7fa]"}`}>

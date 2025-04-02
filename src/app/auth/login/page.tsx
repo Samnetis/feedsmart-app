@@ -31,7 +31,7 @@ export default function LoginPage() {
     setError("")
 
     try {
-      // Using Next.js API route which will proxy to the real API
+      // Use our Next.js API route which will proxy to the real API
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -61,29 +61,45 @@ export default function LoginPage() {
         throw new Error(data.message || `Request failed with status ${response.status}`)
       }
 
-      // Extract user data from the response
+      // Extract user data from the response - handle the nested structure
       let userData
-      if (data.user) {
+      let token
+
+      console.log("Processing login response data:", data)
+
+      if (data.data && data.data.user) {
+        // Handle the nested structure from your API
+        userData = data.data.user
+        token = data.data.token
+      } else if (data.user) {
         userData = data.user
-      } else if (data.data) {
-        userData = data.data
+        token = data.token
       } else {
         userData = data
+        token = data.token
       }
 
-      // Ensure the user object has a name property
-      if (!userData.name && userData.email) {
-        userData.name = userData.email.split("@")[0] // Use email username as fallback
+      console.log("Extracted user data:", userData)
+      console.log("Extracted token:", token)
+
+      // Format the user data to match what the dashboard expects
+      const formattedUserData = {
+        ...userData,
+        // Ensure name is set for display purposes
+        name:
+          userData.firstName && userData.lastName
+            ? `${userData.firstName} ${userData.lastName}`
+            : userData.firstName || userData.email?.split("@")[0] || "User",
       }
+
+      console.log("Formatted user data for storage:", formattedUserData)
 
       // Store user data in localStorage
-      localStorage.setItem("user", JSON.stringify(userData))
+      localStorage.setItem("user", JSON.stringify(formattedUserData))
 
       // Store token if available
-      if (data.token) {
-        localStorage.setItem("token", data.token)
-      } else if (data.accessToken) {
-        localStorage.setItem("token", data.accessToken)
+      if (token) {
+        localStorage.setItem("token", token)
       }
 
       // Check if user has set up a security PIN
